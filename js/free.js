@@ -8,6 +8,23 @@
     tray.innerHTML = '<div class="free-plate"></div>';
     var plate = tray.firstChild;
     if (HM.art.has('ui:tray')) plate.style.backgroundImage = 'url(' + HM.art.path('ui:tray') + ')'; else plate.classList.add('plain');
+    /* 식판 칸 (그림 기준 %): 놓으면 가장 가까운 칸에 딱 맞게 크기가 조절돼요 */
+    var SLOTS = { rice: [8.5, 18, 41, 64], soup: [55.5, 17, 38, 24], s1: [55.5, 47, 17.5, 14], s2: [76, 47, 17.5, 14], s3: [55.5, 65.5, 17.5, 14], s4: [76, 65.5, 17.5, 14] }, slotEls = {};
+    Object.keys(SLOTS).forEach(function (k) { var d = E('i', 'free-slot'), v = SLOTS[k]; d.style.cssText = 'left:' + v[0] + '%;top:' + v[1] + '%;width:' + v[2] + '%;height:' + v[3] + '%'; plate.appendChild(d); slotEls[k] = d; });
+    function nearest(px, py) {   /* px, py: 식판 안 위치(%) */
+      var best = 'rice', bd = 1e9;
+      Object.keys(SLOTS).forEach(function (k) { var v = SLOTS[k], dx = Math.max(v[0] - px, 0, px - (v[0] + v[2])), dy = Math.max(v[1] - py, 0, py - (v[1] + v[3])), d = dx * dx + dy * dy; if (d < bd) { bd = d; best = k; } });
+      return best;
+    }
+    function layout() {
+      Object.keys(SLOTS).forEach(function (k) {
+        var list = placed.filter(function (p) { return p.slot === k; }), n = list.length; if (!n) return;
+        var v = SLOTS[k], sw = v[2] * 1024 / 100, sh = v[3] * 778 / 100, bc = 1, bs = 0;
+        for (var c = 1; c <= n; c++) { var r = Math.ceil(n / c), cell = Math.min(sw / c, sh / r); if (cell > bs) { bs = cell; bc = c; } }
+        var rows = Math.ceil(n / bc), cw = v[2] / bc, ch = v[3] / rows;
+        list.forEach(function (p, i) { var col = i % bc, row = Math.floor(i / bc), st = p.el.style, pad = .06; st.left = (v[0] + col * cw + cw * pad) + '%'; st.top = (v[1] + row * ch + ch * pad) + '%'; st.width = cw * (1 - 2 * pad) + '%'; st.height = ch * (1 - 2 * pad) + '%'; });
+      });
+    }
     var wrap = E('div', 'fr-main'); wrap.appendChild(tray); wrap.appendChild(info);
     var clear = E('button', 'hm-btn', '🗑 비우기'), done = E('button', 'hm-btn primary', '🍽 다 담았어요!');
     clear.type = done.type = 'button'; ctl.appendChild(clear); ctl.appendChild(done);
@@ -34,10 +51,10 @@
       if (item) item.el.classList.add('lifted');
       mv(e); window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
     }
-    function mv(e) { if (!drag) return; if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 6) drag.moved = true; drag.gh.style.left = e.clientX + 'px'; drag.gh.style.top = e.clientY + 'px'; tray.classList.toggle('over', !!inPlate(e.clientX, e.clientY)); }
+    function mv(e) { if (!drag) return; if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 6) drag.moved = true; drag.gh.style.left = e.clientX + 'px'; drag.gh.style.top = e.clientY + 'px'; var r = inPlate(e.clientX, e.clientY); tray.classList.toggle('over', !!r); var hot = r ? nearest((e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100) : null; Object.keys(slotEls).forEach(function (k) { slotEls[k].classList.toggle('hot', k === hot); }); }
     function up(e) {
       window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
-      if (!drag) return; var d = drag; drag = null; d.gh.remove(); tray.classList.remove('over');
+      if (!drag) return; var d = drag; drag = null; d.gh.remove(); tray.classList.remove('over'); Object.keys(slotEls).forEach(function (k) { slotEls[k].classList.remove('hot'); });
       var r = inPlate(e.clientX, e.clientY);
       if (d.item) {
         d.item.el.classList.remove('lifted');
@@ -48,10 +65,10 @@
       refresh();
     }
     function put(it, e, r) {
-      var x = HM.clamp((e.clientX - r.left) / r.width * 100, 12, 88), y = HM.clamp((e.clientY - r.top) / r.height * 100, 14, 86);
-      it.el.style.left = x + '%'; it.el.style.top = y + '%'; it.el.style.zIndex = ++z; it.el.classList.remove('drop'); void it.el.offsetWidth; it.el.classList.add('drop');
+      var px = (e.clientX - r.left) / r.width * 100, py = (e.clientY - r.top) / r.height * 100;
+      it.slot = nearest(px, py); layout(); it.el.style.zIndex = ++z; it.el.classList.remove('drop'); void it.el.offsetWidth; it.el.classList.add('drop');
     }
-    function remove(it) { it.el.remove(); placed.splice(placed.indexOf(it), 1); refresh(); }
+    function remove(it) { it.el.remove(); placed.splice(placed.indexOf(it), 1); layout(); refresh(); }
     function refresh() { info.textContent = placed.length ? placed.length + '가지를 담았어요' : '음식을 끌어서 식판에 놓아요'; }
     clear.onclick = function () { HM.unlock(); placed.slice().forEach(remove); HM.sfx('tick'); };
     done.onclick = function () {
