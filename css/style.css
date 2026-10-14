@@ -324,3 +324,5 @@ body.calm .hm-glow { animation: none; outline: 5px solid #ffcf3d; }
 .ws-slots { display: flex; gap: 8px; margin-top: 8px; } .ws-slots i { width: 44px; height: 48px; border: 2px solid #333; border-radius: 8px; display: grid; place-items: center; font-style: normal; font-size: 26px; }
 .ws-pay { margin-top: 8px; font-size: 18px; } .ws-box { display: inline-block; width: 260px; height: 54px; border: 2px dashed #999; border-radius: 10px; vertical-align: middle; }
 .ws-compact .ws-q { margin: 6px 0; padding: 6px 10px; } .ws-compact .ws-opt { padding: 3px 8px 3px 26px; font-size: 17px; min-width: 56px; } .ws-compact .ws-opt .qz-ing { width: 30px; height: 30px; } .ws-compact .ws-opt .qz-ing .emo { font-size: 22px; } .ws-compact .ws-slots i { width: 38px; height: 40px; font-size: 22px; } .ws-compact .ws-ch { margin-top: 4px; gap: 6px; } .ws-compact .ws-qp .qz-pic { width: 52px; height: 52px; } .ws-compact .ws-pay { margin-top: 4px; } .ws-compact .ws-box { height: 40px; width: 220px; }
+.qz-coin img.qz-coinimg { width: 72px; height: 72px; max-width: 72px; object-fit: contain; }
+.qz-coin { padding: 6px 8px; }
