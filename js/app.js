@@ -20,7 +20,7 @@
     HM.art.bg(s, 'home');
     var hero = E('div', 'home-hero', '<span class="logo">' + HM.art.html('ui:logo', '🍱', 'logo-art') + '</span><h1>행복한 급식</h1><p>우리 반 친구들의 주문을 받아 급식을 배달해요!</p><div class="home-star">⭐ ' + stat().stars + '</div>');
     s.appendChild(hero);
-    hero.appendChild(HM.maker());
+    s.appendChild(HM.maker());
     var board = E('div', 'menuboard', '<h3>📋 오늘의 급식 <small>' + m.day + '요일</small></h3><div class="mb-row">' + HM.menuFoods(m).map(function (f) { return '<div class="mb-food"><span>' + HM.art.food(f) + '</span><b>' + esc(f.name) + '</b></div>'; }).join('') + '</div>');
     s.appendChild(board);
     var row = E('div', 'home-btns');

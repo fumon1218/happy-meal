@@ -274,3 +274,4 @@ body.calm .hm-glow { animation: none; outline: 5px solid #ffcf3d; }
 .hm-machine { height: 94%; display: flex; flex-direction: column; align-items: center; width: min(230px, 38%); }
 .hm-machine .m-dome { flex: 1; min-height: 0; display: flex; justify-content: center; } .hm-machine .m-dome img { width: auto; max-width: 100%; height: 100%; object-fit: contain; }
 .hm-machine .m-body { margin-top: -10px; position: relative; z-index: 2; } .hm-machine .m-lever { padding: 6px 22px; font-size: 18px; }
+.home > .hm-maker { position: fixed; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); margin: 0; z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
