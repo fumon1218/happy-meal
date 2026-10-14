@@ -13,7 +13,7 @@
 
   function page(title, sub, body, key) {
     return '<section class="ws-page' + (key ? ' ws-key' : '') + '"><header class="ws-head"><h2>🍱 행복한 급식 <small>' + esc(title) + (key ? ' · 정답' : '') + '</small></h2>' +
-      '<div class="ws-name">이름 <i></i> 날짜 <i class="s"></i></div></header>' + (sub ? '<p class="ws-sub">' + esc(sub) + '</p>' : '') + body + '<footer>옥쌤의 즐거운 교실 · 행복한 급식</footer></section>';
+      '<div class="ws-name"><span>이름 <i></i></span><span>날짜 <i class="s"></i></span></div></header>' + (sub ? '<p class="ws-sub">' + esc(sub) + '</p>' : '') + body + '<footer><b>선생님 확인</b><span class="chk"><i>□ 독립</i><i>□ 언어힌트</i><i>□ 시각힌트</i><i>□ 시범</i><i>□ 신체지원</i></span><span class="stamp">참 잘했어요</span><span class="maker"><img src="img/ui/maker.webp" alt="">Made by</span></footer></section>';
   }
   function img(f) { return HM.art.food(f); }
   function card(f, cls, extra) { return '<div class="ws-food ' + (cls || '') + '"><span class="ws-ic">' + img(f) + '</span><b>' + esc(f.name) + '</b>' + (extra || '') + '</div>'; }

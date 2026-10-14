@@ -14,7 +14,7 @@ const exe = process.env.PW_EXE || '/opt/pw-browsers/chromium';
     await p.evaluate((g) => {
       const s = JSON.parse(localStorage.getItem('hm_settings') || '{}'); s.voice = false; s.sound = false; if (g === 'fishing') s.scan = true; localStorage.setItem('hm_settings', JSON.stringify(s)); HM.applySettings();
       const oc = HM.collect; HM.collect = function (h, o, l, gm) { const r = oc(h, o, l, gm); window.__ctx = r.ctx; return r; };
-      const od = HM.deliver; HM.deliver = function (h, o, l, t) { window.__order = o; return od(h, o, l, t); };
+      const od = HM.deliver; HM.deliver = function (h, o, l, t) { window.__order = o; window.__walk = null; return od(h, o, l, t); };
     }, game);
     await p.evaluate(([l, g]) => HM.go.start(l, g), [lv, game]);
     const t0 = Date.now(); let ok = false, steps = 0;
@@ -24,6 +24,7 @@ const exe = process.env.PW_EXE || '/opt/pw-browsers/chromium';
         const q = s => document.querySelector(s);
         const intro = q('.intro .hm-main'); if (intro) { intro.click(); return; }
         const dl = q('.hm-class');
+        if (dl && q('.hm-pad')) { const t = window.__order.seat, tr = Math.floor(t / 3), tc = t % 3; const d = window.__walk = window.__walk || { r: 2, c: 1 }; let m; if (d.r === 2) m = 'up'; else if (d.c < tc) m = 'right'; else if (d.c > tc) m = 'left'; else if (d.r > tr) m = 'up'; else if (d.r < tr) m = 'down'; else m = 'put'; if (m === 'put') { q('.hm-bottom .hm-main').click(); return; } const dd = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] }[m]; d.r += dd[0]; d.c += dd[1]; q('.hm-pad [data-d="' + m + '"]').click(); return; }
         if (dl) { const m = q('.hm-main'); if (m && !m.hidden) { m.click(); return; } const sw = q('.seat'); if (window.__order) { const e = document.querySelector('.seat[data-i="' + window.__order.seat + '"]'); if (e) e.click(); } return; }
         const held = q('.held-food b');
         if (held) {

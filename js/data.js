@@ -75,9 +75,9 @@
   /* 우리 반 친구 (기본은 캐릭터 이름 — 선생님이 실제 이름으로 바꿀 수 있어요) */
   HM.AVATARS = ['🐰', '🐻', '🦊', '🐱', '🐶', '🐧', '🐼', '🐯', '🦁', '🐸', '🐥', '🦄'];
   var DEFAULT_FRIENDS = [
-    { id: 'f0', name: '토끼', emo: '🐰', avoid: [] }, { id: 'f1', name: '곰돌이', emo: '🐻', avoid: ['egg'] },
-    { id: 'f2', name: '여우', emo: '🦊', avoid: [] }, { id: 'f3', name: '고양이', emo: '🐱', avoid: ['milk'] },
-    { id: 'f4', name: '강아지', emo: '🐶', avoid: ['spicy'] }, { id: 'f5', name: '펭귄', emo: '🐧', avoid: ['fish'] }
+    { id: 'f0', name: '토끼', emo: '🐰', avoid: [], likes: ['banana', 'pound-cake', 'strawberry-yogurt'] }, { id: 'f1', name: '곰돌이', emo: '🐻', avoid: ['egg'], likes: ['tonkatsu', 'hotdog', 'choco-milk'] },
+    { id: 'f2', name: '여우', emo: '🦊', avoid: [], likes: ['tteokbokki', 'sotteok', 'tangerine'] }, { id: 'f3', name: '고양이', emo: '🐱', avoid: ['milk'], likes: ['mackerel', 'macaron', 'pear'] },
+    { id: 'f4', name: '강아지', emo: '🐶', avoid: ['spicy'], likes: ['bulgogi', 'jjajang', 'donut'] }, { id: 'f5', name: '펭귄', emo: '🐧', avoid: ['fish'], likes: ['muscat', 'omurice', 'curry'] }
   ];
   HM.friends = function () {
     var saved = HM.jget('friends', null);

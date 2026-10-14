@@ -20,8 +20,14 @@
       var many = HM.shuffle(items.filter(function (it) { var k = HM.food(it.id).cat; return k === 'side' || k === 'fruit'; }));
       if (many[0]) many[0].n = 2; if (lv >= 5 && many[1]) many[1].n = 2;
     }
+    /* 특별 주문: 친구가 제일 좋아하는 음식 (2단계부터 가끔) */
+    var special = null;
+    if (lv >= 2 && friend.likes && Math.random() < .4) {
+      var cand = friend.likes.filter(function (id) { return avoid.indexOf(id) < 0 && !HM.food(id).tags.some(function (t) { return (friend.avoid || []).indexOf(t) >= 0; }) && items.every(function (it) { return it.id !== id; }); });
+      if (cand.length) { special = HM.pick(cand); var s = { id: special, n: 1 }; if (items.length >= COUNT[lv - 1]) items[items.length - 1] = s; else items.push(s); }
+    }
     var shownAvoid = lv >= 4 ? avoid : [];
-    return { friend: friend, seat: seat, items: items, avoid: shownAvoid, level: lv, text: HM.orderText(friend, items), menu: menu };
+    return { friend: friend, seat: seat, items: items, avoid: shownAvoid, special: special, level: lv, text: HM.orderText(friend, items), menu: menu };
   };
   HM.orderText = function (friend, items) {
     var parts = items.map(function (it) { var f = HM.food(it.id); return f.name + (it.n > 1 ? ' ' + it.n + '개' : ''); });

@@ -18,8 +18,8 @@
         if (!id) { var need = ctx.needIds(), dec = ctx.decoys(); id = (Math.random() < .35 && need.length) ? HM.pick(need) : HM.pick(dec.concat(need.map(HM.food))).id; }
         if (typeof id === 'object') id = id.id; f = HM.food(id);
         var col = COLORS[seq++ % COLORS.length];
-        el.style.width = s + 'px'; el.style.setProperty('--c', col);
-        el.innerHTML = '<span class="bal-body">' + (HM.art.has('ui:balloon') ? HM.art.html('ui:balloon', '', 'bal-art') : '') + '<span class="bal-food">' + HM.art.food(f) + '</span></span><i class="bal-string"></i>';
+        el.style.width = s + 'px'; el.style.setProperty('--c', col); el.style.setProperty('--h', ((seq * 67) % 360) + 'deg');
+        el.innerHTML = '<span class="bal-body' + (HM.art.has('ui:balloon') ? ' art' : '') + '">' + (HM.art.has('ui:balloon') ? HM.art.html('ui:balloon', '', 'bal-art') : '') + '<span class="bal-food">' + HM.art.food(f) + '</span></span><i class="bal-string"></i>';
         var b = { id: id, el: el, x: HM.rand(Math.max(1, ctx.W() - s)) , y: ctx.H() + 20 + HM.rand(80), ph: Math.random() * 6, s: s, sp: speed * (.85 + Math.random() * .3), dead: false };
         el.onpointerdown = function (e) { e.preventDefault(); e.stopPropagation(); HM.unlock(); hit(b); };
         stage.appendChild(el); bals.push(b); place(b); return b;

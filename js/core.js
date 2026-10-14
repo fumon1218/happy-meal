@@ -61,4 +61,11 @@
   });
   /* 반짝이는 안내 표시 */
   HM.glow = function (el) { document.querySelectorAll('.hm-glow').forEach(function (x) { x.classList.remove('hm-glow'); }); if (el) el.classList.add('hm-glow'); };
+  /* 만든 사람 워터마크 (옥쌤의 즐거운 교실과 같은 마크) */
+  HM.maker = function () {
+    var b = HM.el('button', 'hm-maker', '<span class="mk-f"><img src="img/ui/maker.webp" alt="">Made by</span><span class="mk-b">우리 아이들과 옥선생님을 위하여<br><i>박장학사</i>가 만들다 ✨</span>');
+    b.type = 'button'; b.setAttribute('aria-label', '만든 사람');
+    b.onclick = function () { b.classList.toggle('back'); };
+    return b;
+  };
 })(window);

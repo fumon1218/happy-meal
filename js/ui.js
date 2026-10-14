@@ -75,7 +75,7 @@
     var chips = {};
     order.items.forEach(function (it) {
       var f = HM.food(it.id), c = E('div', 'ord-chip', '<span class="ord-ic">' + HM.art.food(f) + '</span><span class="ord-name">' + HM.esc(f.name) + '</span><span class="ord-n"></span>');
-      chips[it.id] = c; row.appendChild(c);
+      if (order.special === it.id) c.classList.add('special'); chips[it.id] = c; row.appendChild(c);
     });
     if (order.avoid.length) {
       root.appendChild(E('div', 'ord-avoid', '🚫 ' + order.avoid.map(function (id) { return HM.esc(HM.food(id).name); }).join(', ') + ' 못 먹어요'));

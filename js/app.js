@@ -20,12 +20,14 @@
     HM.art.bg(s, 'home');
     var hero = E('div', 'home-hero', '<span class="logo">' + HM.art.html('ui:logo', '🍱', 'logo-art') + '</span><h1>행복한 급식</h1><p>우리 반 친구들의 주문을 받아 급식을 배달해요!</p><div class="home-star">⭐ ' + stat().stars + '</div>');
     s.appendChild(hero);
+    hero.appendChild(HM.maker());
     var board = E('div', 'menuboard', '<h3>📋 오늘의 급식 <small>' + m.day + '요일</small></h3><div class="mb-row">' + HM.menuFoods(m).map(function (f) { return '<div class="mb-food"><span>' + HM.art.food(f) + '</span><b>' + esc(f.name) + '</b></div>'; }).join('') + '</div>');
     s.appendChild(board);
     var row = E('div', 'home-btns');
     row.appendChild(btn('▶ 급식 시작', 'hm-btn big primary', levelSelect));
     if (last) row.appendChild(btn('↻ 이어서 하기 <small>' + last.lv + '단계 · ' + (last.game === 'mix' ? '섞어서' : HM.games[last.game].name) + '</small>', 'hm-btn big', function () { startSession(last.lv, last.game); }));
     row.appendChild(btn('📖 급식 도감', 'hm-btn big', dexScreen));
+    row.appendChild(btn('💞 친구 수첩', 'hm-btn big', friendsScreen));
     row.appendChild(btn('🖨 학습지 만들기', 'hm-btn big', printScreen));
     row.appendChild(btn('⚙ 설정·친구', 'hm-btn big', settings));
     s.appendChild(row);
@@ -73,11 +75,13 @@
         var run = HM.collect(host, order, lv, game); cur = run;
         return run.done.then(function (st) {
           if (!alive()) return;
-          var dv = HM.deliver(host, order, lv, run.tray); cur = dv;
+          order.react = HM.reaction(order); var dv = HM.deliver(host, order, lv, run.tray); cur = dv;
           return dv.promise.then(function (d) {
             if (!alive()) return;
             var mis = st.mistakes + d.mistakes, stars = mis === 0 ? 3 : mis <= 2 ? 2 : 1;
-            results.push({ order: order, stars: stars, mis: mis }); idx++; next();
+            var gain = 1 + (stars === 3 ? 1 : 0) + (order.special ? 2 : 0), up = HM.bond.add(order.friend.id, gain);
+            if (order.special) HM.bond.discover(order.friend.id, order.special);
+            results.push({ order: order, stars: stars, mis: mis, up: up, gain: gain, st: st }); idx++; next();
           });
         });
       });
@@ -103,7 +107,7 @@
       host.innerHTML = ''; drawProg(); prog.innerHTML = '';
       var box = E('div', 'result'); HM.sfx('win'); HM.say('모두 배달했어요! 정말 잘했어요!');
       box.innerHTML = '<h2>🎉 모두 배달했어요!</h2><div class="res-stars">⭐ ' + tot + ' / ' + results.length * 3 + '</div>' +
-        '<div class="res-list">' + results.map(function (r) { return '<div class="res-row"><span class="res-av">' + HM.art.friend(r.order.friend, true) + '</span><b>' + esc(r.order.friend.name) + '</b><span class="res-it">' + r.order.items.map(function (it) { return HM.art.food(HM.food(it.id)); }).join('') + '</span><span class="res-st">' + '⭐'.repeat(r.stars) + '</span></div>'; }).join('') + '</div>';
+        '<div class="res-list">' + results.map(function (r) { return '<div class="res-row"><span class="res-av">' + HM.art.friend(r.order.friend, true) + '</span><b>' + esc(r.order.friend.name) + '</b><span class="res-it">' + r.order.items.map(function (it) { return HM.art.food(HM.food(it.id)); }).join('') + '</span><span class="res-st">' + '⭐'.repeat(r.stars) + '</span><span class="res-bond">💞+' + r.gain + '</span></div>' + (r.up ? '<div class="res-up">🎉 ' + esc(HM.josa(r.order.friend.name, '과', '와')) + ' <b>' + esc(r.up.name) + '</b>이(가) 되었어요! 선물 ' + r.up.gift + '</div>' : ''); }).join('') + '</div>';
       var uniq = fresh.filter(function (id, i) { return fresh.indexOf(id) === i; });
       if (uniq.length) box.appendChild(E('div', 'res-new', '<b>📖 새로 도감에 담았어요!</b><div>' + uniq.map(function (id) { return '<span class="dx-mini">' + HM.art.food(HM.food(id)) + '<i>' + esc(HM.food(id).name) + '</i></span>'; }).join('') + '</div>'));
       var row = E('div', 'home-btns');
@@ -132,6 +136,23 @@
       });
       s.appendChild(grid);
     });
+  }
+
+  /* ---------- 친구 수첩 ---------- */
+  function friendsScreen() {
+    var s = screen('friendsbook'); HM.art.bg(s, 'home'); topbar(s, '친구 수첩', true);
+    var grid = E('div', 'fb-grid'); s.appendChild(grid);
+    HM.friends().forEach(function (f) {
+      var n = HM.bond.get(f.id), ti = HM.bond.tierIdx(n), T = HM.bond.TIERS[ti], nx = HM.bond.next(f.id), known = HM.bond.known(f.id);
+      var pct = nx ? Math.round((n - T.min) / (nx.min - T.min) * 100) : 100;
+      var c = E('div', 'fb-card tier' + ti, '<div class="fb-av">' + HM.art.friend(f, ti >= 1) + '</div><h3>' + esc(f.name) + ' <span>' + T.emo + '</span></h3><b class="fb-t">' + esc(T.name) + '</b>' +
+        '<div class="fb-bar"><i style="width:' + pct + '%"></i></div><small>' + (nx ? esc(nx.name) + '까지 💞 ' + (nx.min - n) : '최고의 절친!') + '</small>' +
+        '<div class="fb-gifts">' + HM.bond.TIERS.map(function (t, i) { return '<span class="' + (i <= ti ? 'on' : '') + '">' + (t.gift || '·') + '</span>'; }).join('') + '</div>' +
+        '<div class="fb-likes"><b>좋아하는 음식</b> ' + (f.likes || []).map(function (id) { return known.indexOf(id) >= 0 ? '<span class="lk">' + HM.art.food(HM.food(id)) + '</span>' : '<span class="lk q">❓</span>'; }).join('') + '</div>' +
+        ((f.avoid || []).length ? '<div class="fb-avoid">🚫 ' + f.avoid.map(function (t) { return esc(HM.TAGNAMES[t]); }).join(', ') + ' 못 먹어요</div>' : ''));
+      grid.appendChild(c);
+    });
+    s.appendChild(E('p', 'fb-tip', '2단계부터 친구가 ⭐ 특별 주문(제일 좋아하는 음식)을 할 때가 있어요. 배달하면 좋아하는 음식을 알게 돼요!'));
   }
 
   /* ---------- 학습지 ---------- */
@@ -187,7 +208,7 @@
   }
 
   /* ---------- 시작 ---------- */
-  HM.go = { home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
+  HM.go = { friends: friendsScreen, home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
   function boot() {
     app = document.getElementById('app'); HM.applySettings();
     var host = document.createElement('div'); host.id = 'print-host'; document.body.appendChild(host);
