@@ -8,6 +8,9 @@
     { id: 'order', name: '주문서 보고 고르기', emo: '📝', desc: '친구의 주문을 읽고 알맞은 음식에 ○ 해요.' },
     { id: 'tray', name: '식판 채우기', emo: '🍱', desc: '음식 그림을 오려서 식판 알맞은 칸에 붙여요.' },
     { id: 'match', name: '그림과 이름 잇기', emo: '🔤', desc: '음식 그림과 이름을 짝지어요.' },
+    { id: 'letters', name: '급식 글자 퀴즈', emo: '🔤', desc: '그림을 보고 이름·첫소리·빠진 글자를 찾아요.' },
+    { id: 'shop', name: '급식 계산대', emo: '🧮', desc: '개수 세기, 더하기, 돈 계산을 해요.' },
+    { id: 'mart', name: '재료 마트', emo: '🥕', desc: '요리에 들어가는 재료에 ○ 해요.' },
     { id: 'seat', name: '배달 자리 찾기', emo: '🚚', desc: '친구 자리를 찾아 배달해요.' }
   ];
 
@@ -98,9 +101,32 @@
     return html;
   }
 
+  /* ⑤~⑦ 급식 공부 학습지 (글자 퀴즈·계산대·재료 마트): 놀이와 같은 문제를 종이로 */
+  function quizSheet(gid, L, opts, key) {
+    var G = HM.learn[gid], html = '', fixP = function (h) { return h.replace('글자를 눌러 이름을 만들어요', '글자를 골라 이름을 써요').replace('돈을 내요', '값은 얼마일까요?'); };
+    var sub = { letters: ['그림을 보고 알맞은 글자에 ○ 해요.', '글자 퀴즈'], shop: ['알맞은 답에 ○ 해요. 돈은 동전을 그려요.', '급식 계산대'], mart: ['요리에 들어가는 재료에 모두 ○ 해요.', '재료 마트'] }[gid];
+    for (var p = 0; p < opts.pages; p++) {
+      var body = '';
+      G.make(L).forEach(function (q, n) {
+        var inner = '<div class="ws-qq"><b class="ws-no">' + (n + 1) + '.</b><div class="ws-qp">' + fixP(q.prompt) + '</div></div>', ch = '';
+        if (q.type === 'build') {
+          ch = '<div class="ws-ch">' + q.tiles.map(function (t) { return '<span class="ws-opt">' + esc(t) + '</span>'; }).join('') + '</div><div class="ws-slots">' + q.answer.map(function (a) { return '<i>' + (key ? esc(a) : '') + '</i>'; }).join('') + '</div>';
+        } else if (q.type === 'pay') {
+          ch = '<div class="ws-pay">동전을 그려서 ' + q.price + '원을 만들어요 <span class="ws-box"></span>' + (key ? ' <u>' + q.price + '원</u>' : '') + '</div>';
+        } else {
+          ch = '<div class="ws-ch">' + q.opts.map(function (o) { return '<span class="ws-opt' + (key && o.ok ? ' ans' : '') + '"><em class="ws-o"></em>' + o.html + '</span>'; }).join('') + '</div>';
+        }
+        body += '<div class="ws-q">' + inner + ch + '</div>';
+      });
+      html += page(sub[1], sub[0], '<div class="ws-compact">' + body + '</div>', key);
+    }
+    return html;
+  }
+  function letters(L, o, k) { return quizSheet('letters', L, o, k); } function shop(L, o, k) { return quizSheet('shop', L, o, k); } function mart(L, o, k) { return quizSheet('mart', L, o, k); }
+
   HM.worksheet = function (type, L, opts, key) {
     opts = Object.assign({ pages: 1, day: 0 }, opts || {});
-    var f = { order: order, tray: trayPage, match: match, seat: seat }[type], old = HM.rand, st = (opts.seed || 1) >>> 0;
+    var f = { order: order, tray: trayPage, match: match, seat: seat, letters: letters, shop: shop, mart: mart }[type], old = HM.rand, st = (opts.seed || 1) >>> 0;
     HM.rand = function (n) { st = (st * 1664525 + 1013904223) >>> 0; return Math.floor(st / 4294967296 * n); };   /* 같은 씨앗 → 학습지와 정답지가 똑같이 만들어져요 */
     try { return f(L, opts, key); } finally { HM.rand = old; }
   };

@@ -27,6 +27,7 @@
     row.appendChild(btn('▶ 급식 시작', 'hm-btn big primary', levelSelect));
     if (last) row.appendChild(btn('↻ 이어서 하기 <small>' + last.lv + '단계 · ' + (last.game === 'mix' ? '섞어서' : HM.games[last.game].name) + '</small>', 'hm-btn big', function () { startSession(last.lv, last.game); }));
     row.appendChild(btn('🍽 자유 급식 <small>끌어서 담기</small>', 'hm-btn big', freeScreen));
+    row.appendChild(btn('📚 급식 공부 <small>글자·계산·재료</small>', 'hm-btn big', learnScreen));
     row.appendChild(btn('📖 급식 도감', 'hm-btn big', dexScreen));
     row.appendChild(btn('💞 친구 수첩', 'hm-btn big', friendsScreen));
     row.appendChild(btn('🖨 학습지 만들기', 'hm-btn big', printScreen));
@@ -139,6 +140,36 @@
     });
   }
 
+  /* ---------- 급식 공부 (글자 퀴즈 · 계산대 · 재료 마트) ---------- */
+  function learnScreen() {
+    var s = screen('learn'), L = HM.jget('learnlast', { game: 'letters', lv: 1 }), game = L.game, lv = L.lv;
+    HM.art.bg(s, 'home'); topbar(s, '급식 공부', true);
+    var gc = E('div', 'game-cards'), lc = E('div', 'learn-lv'); s.appendChild(gc); s.appendChild(lc);
+    function drawLv() { lc.innerHTML = ''; HM.learn[game].lv.forEach(function (t, i) { var c = E('button', 'lv-card' + (i + 1 === lv ? ' on' : ''), '<b>' + (i + 1) + '</b><small>' + esc(t) + '</small>'); c.type = 'button'; c.onclick = function () { lv = i + 1; HM.sfx('tick'); drawLv(); }; lc.appendChild(c); }); }
+    ['letters', 'shop', 'mart'].forEach(function (id) {
+      var G = HM.learn[id], c = E('button', 'game-card' + (id === game ? ' on' : ''), '<span>' + G.emo + '</span><b>' + esc(G.name) + '</b><small>' + esc(G.desc) + '</small><em class="sk">🎯 ' + esc(G.skill) + '</em>'); c.type = 'button';
+      c.onclick = function () { game = id; gc.querySelectorAll('.game-card').forEach(function (x) { x.classList.toggle('on', x === c); }); HM.sfx('tick'); drawLv(); }; gc.appendChild(c);
+    });
+    drawLv();
+    s.appendChild(btn('▶ 시작!', 'hm-btn big primary go', function () { HM.jset('learnlast', { game: game, lv: lv }); runLearn(game, lv); }));
+  }
+  function runLearn(game, lv) {
+    var s = screen('learnplay'), G = HM.learn[game], host = E('div', 'qz-host');
+    HM.art.bg(s, game === 'mart' ? (HM.art.has('bg:mart') ? 'mart' : 'kitchen') : 'class'); topbar(s, G.name + ' · ' + lv + '단계', true); s.appendChild(host);
+    var q = HM.quiz(host, { name: G.name, emo: G.emo, lv: lv, qs: G.make(lv) }); cur = q; var my = token;
+    q.promise.then(function (r) {
+      if (my !== token) return;
+      var st = stat(), stars = r.clean; st.stars += stars; HM.jset('stat', st);
+      var rec = HM.jget('learn', { games: {}, wrong: {} }), gr = rec.games[game] || { plays: 0, right: 0, n: 0, mis: 0 };
+      gr.plays++; gr.right += r.clean; gr.n += r.n; gr.mis += r.mistakes; rec.games[game] = gr;
+      Object.keys(r.wrong).forEach(function (k) { rec.wrong[k] = (rec.wrong[k] || 0) + r.wrong[k]; }); HM.jset('learn', rec);
+      host.innerHTML = '<div class="qz-card qz-result"><h2>' + (stars >= r.n ? '👏 모두 잘했어요!' : '🎉 끝까지 했어요!') + '</h2><div class="qz-stars">' + '⭐'.repeat(stars) + '<span>' + '☆'.repeat(r.n - stars) + '</span></div><p>한 번에 맞힌 문제 ' + stars + ' / ' + r.n + '</p></div>';
+      var again = btn('↻ 다시 하기', 'hm-btn big primary', function () { runLearn(game, lv); }), more = btn(lv < 5 ? '다음 단계 ▶' : '다른 공부', 'hm-btn big', function () { if (lv < 5) runLearn(game, lv + 1); else learnScreen(); });
+      var row = E('div', 'home-btns'); row.appendChild(again); row.appendChild(more); row.appendChild(btn('📚 공부 고르기', 'hm-btn big', learnScreen)); host.appendChild(row);
+      HM.say(stars >= r.n ? '모두 잘했어요!' : '끝까지 했어요!');
+    });
+  }
+
   /* ---------- 자유 급식 ---------- */
   function freeScreen() {
     var s = screen('free'); HM.art.bg(s, 'kitchen'); topbar(s, '자유 급식', true);
@@ -215,7 +246,7 @@
   }
 
   /* ---------- 시작 ---------- */
-  HM.go = { friends: friendsScreen, free: freeScreen, home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
+  HM.go = { friends: friendsScreen, free: freeScreen, learn: learnScreen, runLearn: runLearn, home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
   function boot() {
     app = document.getElementById('app'); HM.applySettings();
     var host = document.createElement('div'); host.id = 'print-host'; document.body.appendChild(host);

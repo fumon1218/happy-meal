@@ -4,14 +4,15 @@
 (function (g) {
   'use strict';
   var HM = g.HM, ok = {};
-  var UI = ['tray', 'balloon', 'hook', 'bird', 'gacha', 'capsule', 'desk', 'pond', 'basket', 'logo', 'mascot', 'star', 'menuboard'];
-  var BG = ['home', 'balloon', 'fishing', 'birds', 'gacha', 'class', 'kitchen'];
+  var UI = ['tray', 'balloon', 'hook', 'bird', 'gacha', 'capsule', 'desk', 'pond', 'basket', 'logo', 'mascot', 'star', 'menuboard', 'coin100', 'coin500', 'bill1000', 'pot', 'cashier'];
+  var BG = ['home', 'balloon', 'fishing', 'birds', 'gacha', 'class', 'kitchen', 'mart'];
   function path(key) { return 'img/' + key.replace(':', '/') + '.webp'; }
   HM.art = {
     ok: ok, path: path,
     keys: function () {
       var k = []; HM.FOODS.forEach(function (f) { k.push('food:' + f.id); });
       HM.friends().forEach(function (f) { k.push('friend:' + f.id, 'friend:' + f.id + '_happy'); });
+      Object.keys(HM.ING || {}).forEach(function (i) { k.push('ing:' + i); });
       UI.forEach(function (u) { k.push('ui:' + u); }); BG.forEach(function (b) { k.push('bg:' + b); }); return k;
     },
     preload: function () {
