@@ -5,7 +5,7 @@
   var COUNT = [3, 4, 4, 5, 6], SPEED = [.07, .09, .125, .16, .2];
   HM.games = HM.games || {};
   HM.games.birds = {
-    id: 'birds', name: '새 배달', emo: '🐦', desc: '주문한 음식을 문 새를 눌러 잡아요.',
+    id: 'birds', skill: 'sort', name: '새 배달', emo: '🐦', desc: '주문한 음식을 문 새를 눌러 잡아요.',
     start: function (ctx) {
       var stage = ctx.stage, lv = ctx.level, birds = [], seq = 0;
       var speed = SPEED[lv - 1] * ctx.slowK * (ctx.assisted ? .8 : 1);

@@ -4,7 +4,7 @@
   var HM = g.HM, E = HM.el;
   HM.games = HM.games || {};
   HM.games.gacha = {
-    id: 'gacha', name: '급식 뽑기', emo: '🎰', desc: '뽑기 기계에서 나온 음식을 담을지 돌려줄지 골라요.',
+    id: 'gacha', skill: 'read', name: '급식 뽑기', emo: '🎰', desc: '뽑기 기계에서 나온 음식을 담을지 돌려줄지 골라요.',
     start: function (ctx) {
       var stage = ctx.stage, lv = ctx.level, state = 'idle', cur = null, bag = [];
       var machine = E('div', 'hm-machine', '<div class="m-dome">' + (HM.art.has('ui:gacha') ? HM.art.html('ui:gacha', '') : '<span class="m-balls">🔴🟡🔵🟢🟣</span>') + '</div><div class="m-body"><button type="button" class="m-lever">뽑기!</button></div>');
@@ -29,7 +29,11 @@
         cur = nextFood(); cap.hidden = false; cap.className = 'hm-capsule roll'; card.hidden = true; btns.hidden = true;
         ctx.later(function () {
           var f = HM.food(cur); cap.hidden = true; lever.classList.remove('pulled');
-          card.innerHTML = '<span class="g-ic">' + HM.art.food(f, 'big') + '</span><b>' + HM.esc(f.name) + '</b>'; card.hidden = false; card.className = 'hm-gcard open'; HM.sfx('coin'); HM.say(f.name);
+          if (ctx.twist) {   /* 글자 읽기: 이름만 보여 줘요. 읽어 보고 정해요 */
+            card.innerHTML = '<b class="g-read">' + HM.esc(f.name) + '</b><button type="button" class="g-say">🔊 읽어 주기</button>';
+            card.querySelector('.g-say').onclick = function (e) { e.stopPropagation(); HM.unlock(); HM.say(f.name); };
+          } else { card.innerHTML = '<span class="g-ic">' + HM.art.food(f, 'big') + '</span><b>' + HM.esc(f.name) + '</b>'; HM.say(f.name); }
+          card.hidden = false; card.className = 'hm-gcard open'; HM.sfx('coin');
           btns.hidden = false; state = 'choose'; chooseHelp();
         }, 900);
       }
@@ -40,14 +44,15 @@
           ctx.setMain(needed ? '🍽️ 담기!' : '↩️ 돌려주기!', function () { (needed ? doKeep : doBack)(); }); ctx.glowMain(true);
         }
       }
+      function reveal() { if (ctx.twist) card.innerHTML = '<span class="g-ic">' + HM.art.food(HM.food(cur), 'big') + '</span><b>' + HM.esc(HM.food(cur).name) + '</b>'; }
       function reset() { keep.classList.remove('hm-glow'); back.classList.remove('hm-glow'); card.hidden = true; btns.hidden = true; state = 'idle'; ctx.glowMain(false); if (!ctx.stopped()) ctx.setMain('🎰 뽑기!', pull); }
       function doKeep() {
         if (state !== 'choose') return; state = 'busy';
-        var ok = ctx.take(cur, card); card.classList.add(ok ? 'gone' : 'no');
+        reveal(); var ok = ctx.take(cur, card); card.classList.add(ok ? 'gone' : 'no');
         ctx.later(function () { card.classList.remove('gone', 'no'); reset(); }, ok ? 500 : 900);
       }
       function doBack() {
-        if (state !== 'choose') return; state = 'busy';
+        if (state !== 'choose') return; state = 'busy'; reveal();
         if (ctx.need(cur) > 0) { if (lv >= 3) ctx.stats.mistakes++; ctx.say('필요한 음식이었어요. 다음에는 담아요!', 1400); HM.sfx('no'); }
         else { HM.sfx('ok'); ctx.say('잘 골랐어요! 주문하지 않은 음식이에요', 1100); }
         card.classList.add('back'); ctx.later(function () { card.classList.remove('back'); reset(); }, 700);

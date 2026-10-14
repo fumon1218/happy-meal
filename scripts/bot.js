@@ -25,6 +25,12 @@ const exe = process.env.PW_EXE || '/opt/pw-browsers/chromium';
         const intro = q('.intro .hm-main'); if (intro) { intro.click(); return; }
         const dl = q('.hm-class');
         if (dl) { const m = q('.hm-main'); if (m && !m.hidden) { m.click(); return; } const sw = q('.seat'); if (window.__order) { const e = document.querySelector('.seat[data-i="' + window.__order.seat + '"]'); if (e) e.click(); } return; }
+        const held = q('.held-food b');
+        if (held) {
+          const f = HM.FOODS.find(x => x.name === held.textContent); const ok = f.cat === 'side' ? ['s1', 's2', 's3'] : f.cat === 'fruit' ? ['s4'] : [f.cat];
+          if (!window.__wrongTried) { window.__wrongTried = 1; const bad = ['rice', 'soup', 's1', 's4', 'drink'].find(k => !ok.includes(k)); const e = q('.tray-slot[data-s="' + bad + '"]'); if (e) { e.click(); return; } }
+          const e = q('.tray-slot[data-s="' + ok[0] + '"]'); if (e) e.click(); return;
+        }
         const c = window.__ctx; if (!c || c.stopped()) return;
         const ids = c.needIds(); if (!ids.length) return;
         const ev = el => el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
@@ -32,7 +38,7 @@ const exe = process.env.PW_EXE || '/opt/pw-browsers/chromium';
         else if (game === 'birds') { for (const id of ids) { const e = document.querySelector('.hm-bird .bird-food img[src*="/' + id + '."]'); if (e) { ev(e.closest('.hm-bird')); e.closest('.hm-bird').click(); return; } } }
         else if (game === 'gacha') {
           const card = q('.hm-gcard'), lever = q('.m-lever');
-          if (card && !card.hidden) { const m = card.querySelector('img'); const id = m ? m.getAttribute('src').split('/').pop().replace('.webp', '') : ''; (ids.includes(id) ? q('.g-keep') : q('.g-back')).click(); }
+          if (card && !card.hidden) { const m = card.querySelector('img'); let id = m ? m.getAttribute('src').split('/').pop().replace('.webp', '') : ''; if (!id) { const nm = card.querySelector('.g-read'); const ff = nm && HM.FOODS.find(x => x.name === nm.textContent); id = ff ? ff.id : ''; } (ids.includes(id) ? q('.g-keep') : q('.g-back')).click(); }
           else if (lever) lever.click();
         } else { HM.pressMain(); }
       }, game);

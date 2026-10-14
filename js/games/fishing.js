@@ -5,7 +5,7 @@
   var COUNT = [4, 5, 6, 6, 7], FSPEED = [.05, .065, .085, .1, .12], HSPEED = [.0, .32, .42, .55, .7];
   HM.games = HM.games || {};
   HM.games.fishing = {
-    id: 'fishing', name: '급식 낚시', emo: '🎣', desc: '낚싯줄을 내려 주문한 음식을 낚아요.',
+    id: 'fishing', skill: 'count', name: '급식 낚시', emo: '🎣', desc: '낚싯줄을 내려 주문한 음식을 낚아요.',
     start: function (ctx) {
       var stage = ctx.stage, lv = ctx.level, fish = [], seq = 0, phase = 'sweep', hx = .5, hdir = 1, len = 0, carry = null, locked = null;
       var hookEl = E('div', 'hm-hook', '<i class="line"></i><span class="hk">' + (HM.art.has('ui:hook') ? HM.art.html('ui:hook', '') : '🪝') + '</span>');

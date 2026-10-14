@@ -32,6 +32,24 @@
         var badge = it.querySelector('.cnt'); if (counts[f.id] > 1) { if (!badge) { badge = E('i', 'cnt'); it.appendChild(badge); } badge.textContent = '×' + counts[f.id]; }
         it.classList.remove('drop'); void it.offsetWidth; it.classList.add('drop');
       },
+      /* 알맞은 칸 허용 목록 */
+      allowed: function (f) { return f.cat === 'side' ? ['s1', 's2', 's3'] : f.cat === 'fruit' ? ['s4'] : [f.cat]; },
+      /* 칸 나누기: 알맞은 칸을 눌러야 놓여요 (cb 는 놓은 뒤 호출) */
+      pick: function (f, cb) {
+        var ok = T.allowed(f), slots = [].slice.call(root.querySelectorAll('.tray-slot'));
+        root.classList.add('picking');
+        function glowRight(on) { slots.forEach(function (s) { s.classList.toggle('hm-glow', on && ok.indexOf(s.dataset.s) >= 0); }); }
+        function cleanup() { root.classList.remove('picking'); slots.forEach(function (s) { s.onclick = null; s.classList.remove('hm-glow', 'bad'); }); }
+        function place(key) { if (ok.indexOf(key) >= 0 && f.cat === 'side') slotOfId[f.id] = key; cleanup(); cb(true); }
+        slots.forEach(function (s) {
+          s.onclick = function (e) {
+            e.stopPropagation(); HM.unlock();
+            if (ok.indexOf(s.dataset.s) >= 0) { place(s.dataset.s); return; }
+            HM.sfx('no'); s.classList.remove('bad'); void s.offsetWidth; s.classList.add('bad'); T.onWrong && T.onWrong(s.dataset.s);
+          };
+        });
+        return { glow: glowRight, auto: function () { var k = ok.filter(function (x) { return !root.querySelector('[data-s="' + x + '"] .tray-food'); })[0] || ok[0]; place(k); }, cancel: cleanup };
+      },
       slotRect: function (f) { return slotOf(f).getBoundingClientRect(); },
       /* 날아가서 식판에 담기 */
       fly: function (f, from, done) {
@@ -48,8 +66,9 @@
   };
 
   /* ---------- 주문 카드 (남은 개수 표시) ---------- */
-  HM.OrderPanel = function (order) {
-    var root = E('div', 'hm-order'), got = {};
+  HM.OrderPanel = function (order, opt) {
+    opt = opt || {};
+    var root = E('div', 'hm-order'), got = {}, hidden = false, peekT = 0;
     var bub = E('div', 'ord-friend', '<span class="ord-av">' + HM.art.friend(order.friend, false) + '</span><b>' + HM.esc(order.friend.name) + '</b>');
     root.appendChild(bub);
     var row = E('div', 'ord-items'); root.appendChild(row);
@@ -69,10 +88,13 @@
       draw: function () {
         order.items.forEach(function (it) {
           var c = chips[it.id], g0 = P.got(it.id), done = g0 >= it.n;
-          c.classList.toggle('done', done); c.querySelector('.ord-n').textContent = done ? '✅' : (it.n > 1 ? g0 + '/' + it.n : '');
-          if (!done && it.n === 1) c.querySelector('.ord-n').textContent = '';
+          c.classList.toggle('done', done); c.classList.toggle('hid', hidden && !done);
+          c.querySelector('.ord-n').textContent = done ? '✅' : opt.noProgress ? (it.n > 1 ? '×' + it.n : '') : (it.n > 1 ? g0 + '/' + it.n : '');
+          if (!done && it.n === 1 && !opt.noProgress) c.querySelector('.ord-n').textContent = '';
         });
       },
+      hide: function (on) { hidden = on; P.draw(); },
+      peek: function (ms) { if (!hidden) return; P.hide(false); clearTimeout(peekT); peekT = setTimeout(function () { P.hide(true); }, ms / (HM.FAST ? 4 : 1)); },
       add: function (id) { got[id] = (got[id] || 0) + 1; P.draw(); var c = chips[id]; if (c) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); } },
       isDone: function () { return order.items.every(function (it) { return P.got(it.id) >= it.n; }); },
       needIds: function () { return order.items.filter(function (it) { return P.remain(it.id) > 0; }).map(function (it) { return it.id; }); }
@@ -84,17 +106,35 @@
   /* run: 게임에게 줄 ctx 를 만들고, 주문이 다 차면 끝나는 약속(Promise)을 돌려줘요 */
   HM.collect = function (host, order, level, game) {
     host.innerHTML = '';
-    var assisted = HM.assisted(level), stats = { mistakes: 0, taken: 0 };
-    var panel = HM.OrderPanel(order), tray = HM.Tray();
+    var assisted = HM.assisted(level), stats = { mistakes: 0, taken: 0, peeks: 0, skill: game.skill };
+    var S = HM.settings(), twist = level >= 3 && !S.scan && !S.slow, skill = game.skill, SK = HM.SKILLS;
+    var panel = HM.OrderPanel(order, { noProgress: twist && skill === 'count' }), tray = HM.Tray();
+    var sortOn = twist && skill === 'sort', hideOn = twist && (skill === 'listen' || level === 5);
+    var badgeKey = level === 5 ? 'memory' : (level >= 3 ? skill : null);
+    if (badgeKey && SK[badgeKey]) panel.el.appendChild(E('span', 'skill-badge', '🎯 ' + SK[badgeKey]));
+    if (hideOn) {
+      panel.hide(true);
+      var rb = E('button', 'ord-btn', skill === 'listen' ? '🔊 다시 듣기' : '👀 다시 보기'); rb.type = 'button';
+      rb.onclick = function () { stats.peeks++; if (skill === 'listen') HM.say(HM.orderSpeak(order)); else panel.peek(3500); };
+      panel.el.appendChild(rb);
+    }
     var stage = E('div', 'hm-stage ' + game.id), banner = E('div', 'hm-banner'), main = E('button', 'hm-main', '');
     main.type = 'button'; main.hidden = true;
     var bottom = E('div', 'hm-bottom'); bottom.appendChild(tray.el); bottom.appendChild(main);
     host.appendChild(panel.el); host.appendChild(stage); stage.appendChild(banner); host.appendChild(bottom);
     HM.art.bg(stage, game.id);
-    var timers = [], stopped = false, finish;
+    var timers = [], stopped = false, finish, sorting = false, lastMain = null;
+    var COUNTW = ['하나', '둘', '셋', '넷', '다섯'];
+    function commit(f, from) {
+      panel.add(f.id); stats.taken++; HM.sfx('ok');
+      HM.say(twist && skill === 'count' ? COUNTW[Math.min(4, panel.got(f.id) - 1)] : f.name, { noRepeat: false });
+      tray.fly(f, from);
+      if (panel.isDone()) { stopped = true; main.hidden = true; HM.onMain(null); setTimeout(function () { finish(stats); }, 900 / (HM.FAST ? 4 : 1)); }
+    }
+    function restoreMain() { if (lastMain && !stopped) ctx.setMain(lastMain[0], lastMain[1]); else if (!lastMain) ctx.setMain(null); }
     var done = new Promise(function (r) { finish = r; });
     var ctx = {
-      stage: stage, order: order, level: level, assisted: assisted, panel: panel, tray: tray, stats: stats,
+      stage: stage, order: order, level: level, assisted: assisted, twist: twist, skill: skill, panel: panel, tray: tray, stats: stats,
       calm: HM.settings().calm, slowK: HM.settings().slow ? .7 : 1,
       W: function () { return stage.clientWidth; }, H: function () { return stage.clientHeight; },
       stopped: function () { return stopped; },
@@ -112,10 +152,18 @@
       take: function (id, from, soft) {
         var f = HM.food(id);
         if (panel.remain(id) > 0) {
-          panel.add(id); stats.taken++; HM.sfx('ok'); HM.say(f.name, { noRepeat: false });
-          tray.fly(f, from);
-          if (panel.isDone()) { stopped = true; main.hidden = true; HM.onMain(null); setTimeout(function () { finish(stats); }, 900 / (HM.FAST ? 4 : 1)); }
-          return true;
+          if (sorting) { ctx.say('먼저 칸에 놓아요', 900); return false; }
+          if (sortOn) {                      /* 칸 나누기: 잡은 음식을 알맞은 칸에 놓아야 담겨요 */
+            sorting = true; HM.sfx('ok'); HM.say(f.name);
+            var held = E('div', 'held-food', '<span>' + HM.art.food(f) + '</span><b>' + HM.esc(f.name) + '</b>'); stage.appendChild(held);
+            var kind = HM.CATS[f.cat].name; ctx.say(f.name + '은(는) 어느 칸일까요?', 2200);
+            var pk = tray.pick(f, function () { sorting = false; held.remove(); restoreMain(); commit(f, held.getBoundingClientRect()); });
+            tray.onWrong = function (key) { stats.mistakes++; var m = '여기가 아니에요. ' + HM.josa(f.name, '은', '는') + ' ' + (f.cat === 'side' ? '작은 칸' : f.cat === 'rice' ? '큰 칸' : f.cat === 'soup' ? '국 칸' : f.cat === 'fruit' ? '후식 칸' : '우유 칸') + '에 놓아요'; ctx.say(m, 1800); HM.say(m, { noRepeat: true }); };
+            if (assisted) { pk.glow(true); ctx.setMain('📥 칸에 놓기', function () { pk.auto(); }, true); ctx.glowMain(true); }
+            else if (stats.mistakes >= 2) pk.glow(true);
+            return true;
+          }
+          commit(f, from); return true;
         }
         if (!soft) stats.mistakes++;
         HM.sfx('no');
@@ -123,7 +171,8 @@
         ctx.say(why, 1300); HM.say(why, { noRepeat: true });
         return false;
       },
-      setMain: function (label, fn) {
+      setMain: function (label, fn, temp) {
+        if (!temp) lastMain = fn ? [label, fn] : null;
         if (!fn) { main.hidden = true; HM.onMain(null); return; }
         main.hidden = false; main.textContent = label; main.onclick = function () { HM.unlock(); fn(); }; HM.onMain(function () { if (!stopped) fn(); });
       },

@@ -44,7 +44,7 @@
     });
     var gc = E('div', 'game-cards'); s.appendChild(gc);
     [{ id: 'mix', name: '섞어서', emo: '🎲', desc: '친구마다 다른 놀이' }].concat(GAME_IDS.map(function (id) { return HM.games[id]; })).forEach(function (G) {
-      var c = E('button', 'game-card' + (G.id === game ? ' on' : ''), '<span>' + G.emo + '</span><b>' + esc(G.name) + '</b><small>' + esc(G.desc) + '</small>'); c.type = 'button';
+      var c = E('button', 'game-card' + (G.id === game ? ' on' : ''), '<span>' + G.emo + '</span><b>' + esc(G.name) + '</b><small>' + esc(G.desc) + '</small>' + (G.skill ? '<em class="sk">🎯 ' + esc(HM.SKILLS[G.skill]) + ' (3단계~)</em>' : '')); c.type = 'button';
       c.onclick = function () { game = G.id; gc.querySelectorAll('.game-card').forEach(function (x) { x.classList.toggle('on', x === c); }); HM.sfx('tick'); };
       gc.appendChild(c);
     });

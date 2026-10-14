@@ -6,7 +6,7 @@
   var COUNT = [4, 5, 6, 7, 8], SPEED = [.085, .11, .15, .19, .23];
   HM.games = HM.games || {};
   HM.games.balloon = {
-    id: 'balloon', name: '풍선 터트리기', emo: '🎈', desc: '주문한 음식이 든 풍선만 톡! 터트려요.',
+    id: 'balloon', skill: 'listen', name: '풍선 터트리기', emo: '🎈', desc: '주문한 음식이 든 풍선만 톡! 터트려요.',
     start: function (ctx) {
       var stage = ctx.stage, lv = ctx.level, bals = [], seq = 0;
       var speed = SPEED[lv - 1] * ctx.slowK * (ctx.assisted ? .85 : 1);
