@@ -26,6 +26,7 @@
     var row = E('div', 'home-btns');
     row.appendChild(btn('▶ 급식 시작', 'hm-btn big primary', levelSelect));
     if (last) row.appendChild(btn('↻ 이어서 하기 <small>' + last.lv + '단계 · ' + (last.game === 'mix' ? '섞어서' : HM.games[last.game].name) + '</small>', 'hm-btn big', function () { startSession(last.lv, last.game); }));
+    row.appendChild(btn('🍽 자유 급식 <small>끌어서 담기</small>', 'hm-btn big', freeScreen));
     row.appendChild(btn('📖 급식 도감', 'hm-btn big', dexScreen));
     row.appendChild(btn('💞 친구 수첩', 'hm-btn big', friendsScreen));
     row.appendChild(btn('🖨 학습지 만들기', 'hm-btn big', printScreen));
@@ -138,6 +139,12 @@
     });
   }
 
+  /* ---------- 자유 급식 ---------- */
+  function freeScreen() {
+    var s = screen('free'); HM.art.bg(s, 'kitchen'); topbar(s, '자유 급식', true);
+    HM.freeMode(s, function () { var st = stat(); st.stars += 1; HM.jset('stat', st); var c = s.querySelector('.hm-coin'); if (c) c.textContent = '⭐ ' + st.stars; });
+  }
+
   /* ---------- 친구 수첩 ---------- */
   function friendsScreen() {
     var s = screen('friendsbook'); HM.art.bg(s, 'home'); topbar(s, '친구 수첩', true);
@@ -208,7 +215,7 @@
   }
 
   /* ---------- 시작 ---------- */
-  HM.go = { friends: friendsScreen, home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
+  HM.go = { friends: friendsScreen, free: freeScreen, home: home, levels: levelSelect, dex: dexScreen, print: printScreen, settings: settings, start: startSession };
   function boot() {
     app = document.getElementById('app'); HM.applySettings();
     var host = document.createElement('div'); host.id = 'print-host'; document.body.appendChild(host);
