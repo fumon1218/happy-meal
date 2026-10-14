@@ -1,0 +1,13 @@
+name: smoke
+on: { push: { branches: [main] }, pull_request: {} }
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: 문법 검사
+        run: for f in js/*.js js/games/*.js; do node --check "$f"; done
+      - name: 데이터·주문 규칙 점검
+        run: node scripts/smoke-test.mjs
